@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>开发者小工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft Yahei", sans-serif;
+    }
+    body {
+      background-color: #f5f7fa;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 15px #00000010;
+      overflow: hidden;
+    }
+    .tab-nav {
+      display: flex;
+      border-bottom: 1px solid #eee;
+    }
+    .tab-item {
+      flex: 1;
+      text-align: center;
+      line-height: 50px;
+      cursor: pointer;
+      font-size: 15px;
+      color: #666;
+      transition: 0.2s;
+    }
+    .tab-item.active {
+      color: #409eff;
+      border-bottom: 2px solid #409eff;
+    }
+    .tab-content {
+      padding: 30px;
+    }
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.show {
+      display: block;
+    }
+    textarea {
+      width: 100%;
+      height: 180px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      resize: none;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background: #409eff;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .time-box {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .time-item {
+      flex: 1;
+      min-width: 200px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Tab 导航 -->
+    <div class="tab-nav">
+      <div class="tab-item active" data-tab="json">JSON工具</div>
+      <div class="tab-item" data-tab="time">时间戳转换</div>
+      <div class="tab-item" data-tab="base64">Base64编解码</div>
+    </div>
+
+    <div class="tab-content">
+      <!-- JSON 面板 -->
+      <div class="tab-panel show" id="json">
+        <textarea id="jsonInput" placeholder="请粘贴 JSON 文本"></textarea>
+        <div class="btn-group">
+          <button onclick="jsonFormat()">格式化</button>
+          <button onclick="jsonCompress()">压缩</button>
+          <button onclick="clearText('jsonInput')">清空</button>
+        </div>
+      </div>
+
+      <!-- 时间戳面板 -->
+      <div class="tab-panel" id="time">
+        <div class="time-box">
+          <div class="time-item">
+            <p>时间戳(秒/毫秒)</p>
+            <input type="text" id="timestamp" placeholder="输入时间戳">
+            <button style="margin-top:10px" onclick="ts2date()">转日期</button>
+          </div>
+          <div class="time-item">
+            <p>日期时间</p>
+            <input type="text" id="dateStr" placeholder="自动获取当前时间">
+            <button style="margin-top:10px" onclick="date2ts()">转时间戳</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Base64 面板 -->
+      <div class="tab-panel" id="base64">
+        <textarea id="b64Input" placeholder="输入普通文本 / Base64"></textarea>
+        <div class="btn-group">
+          <button onclick="encode()">Base64加密</button>
+          <button onclick="decode()">Base64解密</button>
+          <button onclick="clearText('b64Input')">清空</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab 切换
+    const tabs = document.querySelectorAll('.tab-item');
+    const panels = document.querySelectorAll('.tab-panel');
+    tabs.forEach(tab => {
+      tab.onclick = function () {
+        const key = this.dataset.tab;
+        tabs.forEach(t => t.classList.remove('active'));
+        panels.forEach(p => p.classList.remove('show'));
+        this.classList.add('active');
+        document.getElementById(key).classList.add('show');
+      }
+    });
+
+    // 清空
+    function clearText(id) {
+      document.getElementById(id).value = '';
+    }
+
+    // ========== JSON 工具 ==========
+    function jsonFormat() {
+      const val = document.getElementById('jsonInput').value;
+      try {
+        const res = JSON.stringify(JSON.parse(val), null, 2);
+        document.getElementById('jsonInput').value = res;
+      } catch (e) {
+        alert('JSON 格式错误');
+      }
+    }
+    function jsonCompress() {
+      const val = document.getElementById('jsonInput').value;
+      try {
+        const res = JSON.stringify(JSON.parse(val));
+        document.getElementById('jsonInput').value = res;
+      } catch (e) {
+        alert('JSON 格式错误');
+      }
+    }
+
+    // ========== 时间戳 ==========
+    function ts2date() {
+      let ts = document.getElementById('timestamp').value.trim();
+      if (!ts) return;
+      ts = ts.length === 10 ? Number(ts) * 1000 : Number(ts);
+      const d = new Date(ts);
+      const fmt = `${d.getFullYear()}-${fillZero(d.getMonth()+1)}-${fillZero(d.getDate())} ${fillZero(d.getHours())}:${fillZero(d.getMinutes())}:${fillZero(d.getSeconds())}`;
+      document.getElementById('dateStr').value = fmt;
+    }
+    function date2ts() {
+      const dateVal = document.getElementById('dateStr').value.trim();
+      const timestamp = new Date(dateVal).getTime();
+      document.getElementById('timestamp').value = timestamp;
+    }
+    function fillZero(n) {
+      return n < 10 ? '0' + n : n;
+    }
+
+    // ========== Base64 ==========
+    function encode() {
+      const val = document.getElementById('b64Input').value;
+      document.getElementById('b64Input').value = btoa(unescape(encodeURIComponent(val)));
+    }
+    function decode() {
+      const val = document.getElementById('b64Input').value;
+      try {
+        document.getElementById('b64Input').value = decodeURIComponent(escape(atob(val)));
+      } catch (e) {
+        alert('Base64 解析失败');
+      }
+    }
+  </script>
+</body>
+</html>
